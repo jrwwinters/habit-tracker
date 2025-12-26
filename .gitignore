@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon files (user can generate their own)
+icon-192.png
+icon-512.png
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
