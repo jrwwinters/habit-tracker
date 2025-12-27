@@ -225,6 +225,50 @@ header h1 {
     gap: 5px;
 }
 
+.notification-setting {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.notification-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.notification-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.notification-time-input {
+    padding: 6px 10px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    background: white;
+    color: var(--text-primary);
+    font-family: inherit;
+    width: 100px;
+}
+
+.notification-time-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.notification-time-display {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    display: none;
+}
+
 .habit-actions {
     display: flex;
     gap: 8px;

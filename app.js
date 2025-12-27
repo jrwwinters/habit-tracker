@@ -5,10 +5,14 @@ class HabitTracker {
         this.init();
     }
 
-    init() {
+    async init() {
         this.renderHabits();
         this.updateStats();
         this.setupEventListeners();
+        await this.checkNotificationPermission();
+        this.scheduleNotifications();
+        // Re-schedule notifications every minute
+        setInterval(() => this.scheduleNotifications(), 60000);
     }
 
     setupEventListeners() {
@@ -37,6 +41,7 @@ class HabitTracker {
             completedDates: [],
             streak: 0,
             bestStreak: 0,
+            notificationTime: null,
             createdAt: new Date().toISOString()
         };
 
@@ -139,7 +144,71 @@ class HabitTracker {
             this.saveHabits();
             this.renderHabits();
             this.updateStats();
+            this.scheduleNotifications();
         }
+    }
+
+    async setNotificationTime(habitId, time) {
+        const habit = this.habits.find(h => h.id === habitId);
+        if (!habit) return;
+
+        if (time) {
+            habit.notificationTime = time;
+            await this.requestNotificationPermission();
+        } else {
+            habit.notificationTime = null;
+        }
+
+        this.saveHabits();
+        this.renderHabits();
+        this.scheduleNotifications();
+    }
+
+    async requestNotificationPermission() {
+        if (!('Notification' in window)) {
+            console.log('This browser does not support notifications');
+            return false;
+        }
+
+        if (Notification.permission === 'granted') {
+            return true;
+        }
+
+        if (Notification.permission !== 'denied') {
+            const permission = await Notification.requestPermission();
+            return permission === 'granted';
+        }
+
+        return false;
+    }
+
+    async checkNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            // Don't request immediately, wait for user to set a notification time
+        }
+    }
+
+    scheduleNotifications() {
+        if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+            return;
+        }
+
+        if (Notification.permission !== 'granted') {
+            return;
+        }
+
+        // Send notification schedule to service worker
+        navigator.serviceWorker.ready.then(registration => {
+            const habitsWithNotifications = this.habits.filter(h => h.notificationTime);
+            registration.active.postMessage({
+                type: 'SCHEDULE_NOTIFICATIONS',
+                habits: habitsWithNotifications.map(h => ({
+                    id: h.id,
+                    name: h.name,
+                    notificationTime: h.notificationTime
+                }))
+            });
+        });
     }
 
     getTodayKey() {
@@ -172,6 +241,8 @@ class HabitTracker {
                 ? Math.round((completedCount / daysSinceCreated) * 100) 
                 : 0;
 
+            const notificationTime = habit.notificationTime || '';
+            
             return `
                 <div class="habit-item ${isCompleted ? 'completed' : ''}">
                     <div 
@@ -193,6 +264,18 @@ class HabitTracker {
                                 <span>📊</span>
                                 <span>${completionRate}%</span>
                             </div>
+                        </div>
+                        <div class="notification-setting">
+                            <label class="notification-label">
+                                <span class="notification-icon">🔔</span>
+                                <input 
+                                    type="time" 
+                                    class="notification-time-input"
+                                    value="${notificationTime}"
+                                    placeholder="Set reminder time"
+                                    onchange="habitTracker.setNotificationTime('${habit.id}', this.value)"
+                                >
+                            </label>
                         </div>
                     </div>
                     <div class="habit-actions">
